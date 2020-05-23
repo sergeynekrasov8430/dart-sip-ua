@@ -456,7 +456,7 @@ class RTCSession extends EventManager {
   /**
    * Answer the call.
    */
-  answer(options) async {
+  void answer(options) async {
     logger.debug('answer()');
     var request = this._request;
     var extraHeaders = Utils.cloneArray(options['extraHeaders']);
@@ -622,6 +622,17 @@ class RTCSession extends EventManager {
     }
 
     logger.debug('emit "sdp"');
+    logger.debug("sdp", request.body);
+    if (request.body.lastIndexOf("a=fmtp") == -1 &&
+        request.body.lastIndexOf("H264/90000") != -1) {
+      final searchString = RegExp("a=rtpmap:(.*) H264/90000");
+      var h264Number = searchString.firstMatch(request.body).group(1);
+      request.body = request.body +
+          "a=fmtp:" +
+          h264Number +
+          " level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\n";
+      logger.debug("fixed broken h264 params in sdp");
+    }
     this.emit(EventSdp(originator: 'remote', type: 'offer', sdp: request.body));
 
     var offer = new RTCSessionDescription(request.body, 'offer');
@@ -679,7 +690,7 @@ class RTCSession extends EventManager {
       if (this._status == C.STATUS_TERMINATED) {
         return;
       }
-      logger.error('Failed to answer(): ${error.toString()}', error, s );
+      logger.error('Failed to answer(): ${error.toString()}', error, s);
     }
   }
 
@@ -739,7 +750,7 @@ class RTCSession extends EventManager {
       case C.STATUS_ANSWERED:
         logger.debug('rejecting session');
 
-        status_code = status_code ?? 480;
+        status_code = status_code ?? 486;
 
         if (status_code < 300 || status_code >= 700) {
           throw new Exceptions.InvalidStateError(
@@ -750,7 +761,6 @@ class RTCSession extends EventManager {
         this._failed('local', null, null, null, status_code,
             DartSIP_C.causes.REJECTED, reason_phrase);
         break;
-
       case C.STATUS_WAITING_FOR_ACK:
       case C.STATUS_CONFIRMED:
         logger.debug('terminating session');
@@ -1642,7 +1652,7 @@ class RTCSession extends EventManager {
            *  Because trickle ICE is not defined in the sip protocol, the delay of
            * initiating a call to answer the call waiting will be unacceptable.
            */
-          setTimeout(() => ready(), 3000);
+          setTimeout(() => ready(), 30);
         }
       }
     };
@@ -2700,7 +2710,8 @@ class RTCSession extends EventManager {
    * @param  {IncomingRequest} request
    * @param  {Array} responseExtraHeaders  Extra headers for the 200 response.
    */
-  _handleSessionTimersInIncomingRequest(IncomingRequest request, responseExtraHeaders) {
+  _handleSessionTimersInIncomingRequest(
+      IncomingRequest request, responseExtraHeaders) {
     if (!this._sessionTimers.enabled) {
       return;
     }

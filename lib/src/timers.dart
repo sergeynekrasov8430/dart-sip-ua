@@ -4,8 +4,10 @@ class Timers {
   static const T1 = 500;
   static const T2 = 4000;
   static const T4 = 5000;
+  static const TIMER_A = 0 * T1;
   static const TIMER_B = 64 * T1;
   static const TIMER_D = 0 * T1;
+  static const TIMER_E = 0 * T1;
   static const TIMER_F = 64 * T1;
   static const TIMER_H = 64 * T1;
   static const TIMER_I = 0 * T1;

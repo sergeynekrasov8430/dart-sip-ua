@@ -25,6 +25,11 @@ class SIPUAHelper extends EventManager {
     Log.loggingLevel = Level.debug;
   }
 
+  static Future<void> callKitConfigure() async => callKitConfigureAudioSession();
+  static Future<void> callKitRelease() async => callKitReleaseAudioSession();
+  static Future<void> callKitStart() async => callKitStartAudio();
+  static Future<void> callKitStop() async => callKitStopAudio();
+
   set loggingLevel(Level loggingLevel) => Log.loggingLevel = loggingLevel;
 
   bool get registered {
@@ -98,9 +103,9 @@ class SIPUAHelper extends EventManager {
     return null;
   }
 
-  void answer() {
+  void answer() async {
     if (_session != null) {
-      _session.answer(this._options());
+      await _session.answer(this._options());
     }
   }
 
@@ -122,11 +127,11 @@ class SIPUAHelper extends EventManager {
     }
   }
 
-  void start(UaSettings uaSettings) async {
-    if (this._ua != null) {
+  Future<void> start(UaSettings uaSettings) async {
+    if (_ua != null) {
       logger.warn(
           'UA instance already exist!, stopping UA and creating a new one...');
-      this._ua.stop();
+      _ua.stop();
     }
 
     _uaSettings = uaSettings;
@@ -134,6 +139,7 @@ class SIPUAHelper extends EventManager {
     _settings = Settings();
     var socket = WebSocketInterface(
         uaSettings.webSocketUrl, uaSettings.webSocketExtraHeaders);
+    _settings.contact_uri = uaSettings.contactUri;
     _settings.sockets = [socket];
     _settings.uri = uaSettings.uri;
     _settings.password = uaSettings.password;
@@ -141,41 +147,41 @@ class SIPUAHelper extends EventManager {
     _settings.authorization_user = uaSettings.authorizationUser;
 
     try {
-      this._ua = UA(_settings);
-      this._ua.on(EventSocketConnecting(), (EventSocketConnecting event) {
+      _ua = UA(_settings);
+      _ua.on(EventSocketConnecting(), (EventSocketConnecting event) {
         logger.debug('connecting => ' + event.toString());
         _notifyTransportStateListeners(
             TransportState(TransportStateEnum.CONNECTING));
       });
 
-      this._ua.on(EventSocketConnected(), (EventSocketConnected event) {
+      _ua.on(EventSocketConnected(), (EventSocketConnected event) {
         logger.debug('connected => ' + event.toString());
         _notifyTransportStateListeners(
             TransportState(TransportStateEnum.CONNECTED));
       });
 
-      this._ua.on(EventSocketDisconnected(), (EventSocketDisconnected event) {
+      _ua.on(EventSocketDisconnected(), (EventSocketDisconnected event) {
         logger.debug('disconnected => ' + (event.cause.toString()));
         _notifyTransportStateListeners(TransportState(
             TransportStateEnum.DISCONNECTED,
             cause: event.cause));
       });
 
-      this._ua.on(EventRegistered(), (EventRegistered event) {
+      _ua.on(EventRegistered(), (EventRegistered event) {
         logger.debug('registered => ' + event.cause.toString());
         _registerState = RegistrationState(
             state: RegistrationStateEnum.REGISTERED, cause: event.cause);
         _notifyRegsistrationStateListeners(_registerState);
       });
 
-      this._ua.on(EventUnregister(), (EventUnregister event) {
+      _ua.on(EventUnregister(), (EventUnregister event) {
         logger.debug('unregistered => ' + event.cause.toString());
         _registerState = RegistrationState(
             state: RegistrationStateEnum.UNREGISTERED, cause: event.cause);
         _notifyRegsistrationStateListeners(_registerState);
       });
 
-      this._ua.on(EventRegistrationFailed(), (EventRegistrationFailed event) {
+      _ua.on(EventRegistrationFailed(), (EventRegistrationFailed event) {
         logger.debug('registrationFailed => ' + (event.cause.toString()));
         _registerState = RegistrationState(
             state: RegistrationStateEnum.REGISTRATION_FAILED,
@@ -183,7 +189,7 @@ class SIPUAHelper extends EventManager {
         _notifyRegsistrationStateListeners(_registerState);
       });
 
-      this._ua.on(EventNewRTCSession(), (EventNewRTCSession event) {
+      _ua.on(EventNewRTCSession(), (EventNewRTCSession event) {
         logger.debug('newRTCSession => ' + event.toString());
         _session = event.session;
         if (_session.direction == 'incoming') {
@@ -194,7 +200,7 @@ class SIPUAHelper extends EventManager {
         _notifyCallStateListeners(CallState(CallStateEnum.CALL_INITIATION));
       });
 
-      this._ua.start();
+      _ua.start();
     } catch (e, s) {
       logger.error(e.toString(), null, s);
     }
@@ -272,35 +278,36 @@ class SIPUAHelper extends EventManager {
       'eventHandlers': eventHandlers,
       'pcConfig': {
         'iceServers': [
-          {'url': 'stun:stun.l.google.com:19302'},
-          /*
-           * turn server configuration example.
-            {
-              'url': 'turn:123.45.67.89:3478',
-              'username': 'change_to_real_user',
-              'credential': 'change_to_real_secret'
-            },
-          */
+      // {'url': 'stun:eu-turn4.xirsys.com'},
+          
+           //* turn server configuration example.
+      //{
+      //  'iceServers': [
+          {'url': 'stun:stun4.l.google.com:19302'},
+          //{'url':'turn:94Gn3z_ZHTULo4dFHE0MRLF9C1quAm-PjwTnVLKNTzCe7yAVBZ6rBwBopuUAtwKtAAAAAF6xmxJzZXJnZTg0MzA=@turn:eu-turn4.xirsys.com:3478?transport=udp', 'credential': '8feb1594-8ef1-11ea-acae-6adcafebbb45'},
+           //* turn server configuration example.
+            //{
+              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=udp',
+              //'url': 'turn:eu-turn4.xirsys.com:80?transport=udp',
+              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=udp',
+              //'url': 'turn:eu-turn4.xirsys.com:80?transport=tcp',
+              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=tcp',
+              //'url': 'turns:eu-turn4.xirsys.com:443?transport=tcp',
+              //'url': 'turns:eu-turn4.xirsys.com:5349?transport=tcp',
+              //'username': '94Gn3z_ZHTULo4dFHE0MRLF9C1quAm-PjwTnVLKNTzCe7yAVBZ6rBwBopuUAtwKtAAAAAF6xmxJzZXJnZTg0MzA=',
+              //'credential': '8feb1594-8ef1-11ea-acae-6adcafebbb45'
+            //},
         ]
       },
+     
       'mediaConstraints': {
         "audio": true,
-        "video": voiceonly
-            ? false
-            : {
-                "mandatory": {
-                  "minWidth": '640',
-                  "minHeight": '480',
-                  "minFrameRate": '30',
-                },
-                "facingMode": "user",
-                "optional": List<dynamic>(),
-              }
+        "video": false,
       },
       'rtcOfferConstraints': {
         'mandatory': {
           'OfferToReceiveAudio': true,
-          'OfferToReceiveVideo': !voiceonly,
+          'OfferToReceiveVideo': true,
         },
         'optional': List<dynamic>(),
       },
@@ -460,6 +467,7 @@ class UaSettings {
   String webSocketUrl;
   Map<String, dynamic> webSocketExtraHeaders;
 
+  String contactUri;
   String uri;
   String authorizationUser;
   String password;

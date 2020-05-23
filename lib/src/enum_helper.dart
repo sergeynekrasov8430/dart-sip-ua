@@ -21,8 +21,8 @@ class EnumHelper {
   ///
   static String getName<T>(T enumValue,
       {String Function(String value) recase = reCase}) {
-    String name = enumValue.toString();
-    int period = name.indexOf('.');
+    var name = enumValue.toString();
+    var period = name.indexOf('.');
 
     return recase(name.substring(period + 1));
   }
