@@ -237,10 +237,10 @@ class UA extends EventManager {
    * -throws {TypeError}
    *
    */
-  RTCSession call(target, options) {
+  Future<RTCSession> call(target, options) async {
     logger.debug('call()');
     RTCSession session = new RTCSession(this);
-    session.connect(target, options);
+    await session.connect(target, options);
     return session;
   }
 

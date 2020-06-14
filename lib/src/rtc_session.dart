@@ -260,7 +260,7 @@ class RTCSession extends EventManager {
     return {'local': this._localHold, 'remote': this._remoteHold};
   }
 
-  connect(target, [options, initCallback]) async {
+  Future<void> connect(target, [options, initCallback]) async {
     logger.debug('connect()');
 
     options = options ?? {};
@@ -456,7 +456,7 @@ class RTCSession extends EventManager {
   /**
    * Answer the call.
    */
-  void answer(options) async {
+  Future<void> answer(options) async {
     logger.debug('answer()');
     var request = this._request;
     var extraHeaders = Utils.cloneArray(options['extraHeaders']);
@@ -1652,7 +1652,7 @@ class RTCSession extends EventManager {
            *  Because trickle ICE is not defined in the sip protocol, the delay of
            * initiating a call to answer the call waiting will be unacceptable.
            */
-          setTimeout(() => ready(), 30);
+          setTimeout(() => ready(), 3000);
         }
       }
     };

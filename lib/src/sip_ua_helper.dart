@@ -95,7 +95,7 @@ class SIPUAHelper extends EventManager {
 
   Future<RTCSession> call(String target, [bool voiceonly = false]) async {
     if (_ua != null && _ua.isConnected()) {
-      _session = _ua.call(target, this._options(voiceonly));
+      _session = await _ua.call(target, this._options(voiceonly));
       return _session;
     } else {
       logger.error(
@@ -104,7 +104,7 @@ class SIPUAHelper extends EventManager {
     return null;
   }
 
-  void answer() async {
+  Future<void> answer() async {
     if (_session != null) {
       await _session.answer(this._options());
     }
