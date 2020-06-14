@@ -280,7 +280,7 @@ class SIPUAHelper extends EventManager {
       'eventHandlers': eventHandlers,
       'pcConfig': {
         'iceServers': [
-          {'url': 'stun:45.84.225.18:3478'}
+          {'url': 'stun:ice.callinfo.kz:3478'}
         ]
       },
       'mediaConstraints': {
