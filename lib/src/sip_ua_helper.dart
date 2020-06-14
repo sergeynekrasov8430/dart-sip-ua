@@ -208,7 +208,7 @@ class SIPUAHelper extends EventManager {
     }
   }
 
-  Map<String, Object> _options([bool voiceonly = false]) {
+  Map<String, Object> _options([bool voiceonly = true]) {
     // Register callbacks to desired call events
     EventManager eventHandlers = EventManager();
     eventHandlers.on(EventCallConnecting(), (EventCallConnecting event) {
