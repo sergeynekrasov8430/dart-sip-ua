@@ -290,7 +290,7 @@ class SIPUAHelper extends EventManager {
       'rtcOfferConstraints': {
         'mandatory': {
           'OfferToReceiveAudio': true,
-          'OfferToReceiveVideo': true,
+          'OfferToReceiveVideo': !voiceonly,
         },
         'optional': List<dynamic>(),
       },
