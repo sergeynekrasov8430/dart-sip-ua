@@ -3,6 +3,7 @@ import 'package:flutter_webrtc/webrtc.dart';
 import 'package:logger/logger.dart';
 
 import 'config.dart';
+import 'constants.dart' as DartSIP_C;
 import 'event_manager/event_manager.dart';
 import 'logger.dart';
 import 'message.dart';
@@ -137,14 +138,15 @@ class SIPUAHelper extends EventManager {
     _uaSettings = uaSettings;
 
     _settings = Settings();
-    var socket = WebSocketInterface(
-        uaSettings.webSocketUrl, uaSettings.webSocketExtraHeaders);
+    var socket = WebSocketInterface(uaSettings.webSocketUrl,
+        uaSettings.webSocketExtraHeaders, uaSettings.allowBadCertificate);
     _settings.contact_uri = uaSettings.contactUri;
     _settings.sockets = [socket];
     _settings.uri = uaSettings.uri;
     _settings.password = uaSettings.password;
     _settings.display_name = uaSettings.displayName;
     _settings.authorization_user = uaSettings.authorizationUser;
+    _settings.user_agent = uaSettings.userAgent ?? DartSIP_C.USER_AGENT;
 
     try {
       _ua = UA(_settings);
@@ -278,28 +280,9 @@ class SIPUAHelper extends EventManager {
       'eventHandlers': eventHandlers,
       'pcConfig': {
         'iceServers': [
-      // {'url': 'stun:eu-turn4.xirsys.com'},
-          
-           //* turn server configuration example.
-      //{
-      //  'iceServers': [
-          {'url': 'stun:stun4.l.google.com:19302'},
-          //{'url':'turn:94Gn3z_ZHTULo4dFHE0MRLF9C1quAm-PjwTnVLKNTzCe7yAVBZ6rBwBopuUAtwKtAAAAAF6xmxJzZXJnZTg0MzA=@turn:eu-turn4.xirsys.com:3478?transport=udp', 'credential': '8feb1594-8ef1-11ea-acae-6adcafebbb45'},
-           //* turn server configuration example.
-            //{
-              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=udp',
-              //'url': 'turn:eu-turn4.xirsys.com:80?transport=udp',
-              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=udp',
-              //'url': 'turn:eu-turn4.xirsys.com:80?transport=tcp',
-              //'url': 'turn:eu-turn4.xirsys.com:3478?transport=tcp',
-              //'url': 'turns:eu-turn4.xirsys.com:443?transport=tcp',
-              //'url': 'turns:eu-turn4.xirsys.com:5349?transport=tcp',
-              //'username': '94Gn3z_ZHTULo4dFHE0MRLF9C1quAm-PjwTnVLKNTzCe7yAVBZ6rBwBopuUAtwKtAAAAAF6xmxJzZXJnZTg0MzA=',
-              //'credential': '8feb1594-8ef1-11ea-acae-6adcafebbb45'
-            //},
+          {'url': 'stun:45.84.225.18:3478'}
         ]
       },
-     
       'mediaConstraints': {
         "audio": true,
         "video": false,
@@ -466,6 +449,8 @@ abstract class SipUaHelperListener {
 class UaSettings {
   String webSocketUrl;
   Map<String, dynamic> webSocketExtraHeaders;
+  bool allowBadCertificate = false;
+  String userAgent;
 
   String contactUri;
   String uri;
