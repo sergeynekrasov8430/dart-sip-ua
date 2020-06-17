@@ -99,7 +99,7 @@ class SIPUAHelper extends EventManager {
       return _session;
     } else {
       logger.error(
-          "Not connected, you will need to register.", null, StackTraceNJ());
+          'Not connected, you will need to register.', null, StackTraceNJ());
     }
     return null;
   }
@@ -278,14 +278,10 @@ class SIPUAHelper extends EventManager {
 
     var _defaultOptions = {
       'eventHandlers': eventHandlers,
-      'pcConfig': {
-        'iceServers': [
-          {'url': 'stun:ice.callinfo.kz:3478'}
-        ]
-      },
+      'pcConfig': {'iceServers': _uaSettings.iceServers},
       'mediaConstraints': {
-        "audio": true,
-        "video": false,
+        'audio': true,
+        'video': false,
       },
       'rtcOfferConstraints': {
         'mandatory': {
@@ -457,4 +453,8 @@ class UaSettings {
   String authorizationUser;
   String password;
   String displayName;
+
+  List<Map<String, String>> iceServers = [
+    {'url': 'stun:ice.callinfo.kz:3478'}
+  ];
 }
