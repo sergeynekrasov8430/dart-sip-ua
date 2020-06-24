@@ -332,9 +332,9 @@ class SIPUAHelper extends EventManager {
     }
   }
 
-  void sendDTMF(String tones) {
+  Future<void> sendDTMF(String tones) async {
     if (_session != null) {
-      _session.sendDTMF(tones);
+      await _session.sendDTMF(tones);
     }
   }
 

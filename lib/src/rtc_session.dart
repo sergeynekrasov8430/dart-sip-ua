@@ -839,7 +839,7 @@ class RTCSession extends EventManager {
   }
 
   /// tones may be a single character or a string of dtmf digits
-  sendDTMF(String tones, [Map<String, dynamic> options]) {
+  Future<void> sendDTMF(String tones, [Map<String, dynamic> options]) async {
     logger.debug('sendDTMF() | tones: ${tones.toString()}');
 
     options = options ?? Map();
