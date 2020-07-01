@@ -295,10 +295,15 @@ class _MyRegisterWidget extends State<RegisterWidget>
   }
 
   @override
-  void callStateChanged(CallState state) {
+  void callStateChanged(Call call, CallState state) {
     //NO OP
   }
 
   @override
   void transportStateChanged(TransportState state) {}
+
+  @override
+  void onNewMessage(SIPMessageRequest msg) {
+    // NO OP
+  }
 }
