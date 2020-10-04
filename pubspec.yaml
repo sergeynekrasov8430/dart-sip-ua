@@ -8,10 +8,12 @@ environment:
 
 dependencies:
   crypto: ^2.1.2
-  flutter_webrtc:
-    git:
-      url: https://github.com/sergeynekrasov8430/flutter-webrtc.git
+#  flutter_webrtc:
+#    git:
+#      url: https://github.com/sergeynekrasov8430/flutter-webrtc.git
 #  flutter_webrtc: ^0.3.3
+  flutter_webrtc:
+    path: plugins/flutter-webrtc
   parser_error: ^0.1.1
   sdp_transform: ^0.2.0
   uuid: ^2.0.2

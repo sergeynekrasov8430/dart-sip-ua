@@ -24,15 +24,15 @@ class WebSocketImpl {
       {Iterable<String> protocols, WebSocketSettings webSocketSettings}) async {
     logger.info('connect $_url, ${webSocketSettings.extraHeaders}, $protocols');
     try {
-      if (webSocketSettings.allowBadCertificate) {
-        /// Allow self-signed certificate, for test only.
-        var parsed_url = Grammar.parse(_url, 'absoluteURI');
-        _socket = await _connectForBadCertificate(parsed_url.scheme,
-            parsed_url.host, parsed_url.port, webSocketSettings);
-      } else {
+      // if (webSocketSettings.allowBadCertificate) {
+      //   /// Allow self-signed certificate, for test only.
+      //   var parsed_url = Grammar.parse(_url, 'absoluteURI');
+      //   _socket = await _connectForBadCertificate(parsed_url.scheme,
+      //       parsed_url.host, parsed_url.port, webSocketSettings);
+      // } else {
         _socket = await WebSocket.connect(_url,
             protocols: protocols, headers: webSocketSettings.extraHeaders);
-      }
+      // }
 
       this?.onOpen();
       _socket.listen((data) {

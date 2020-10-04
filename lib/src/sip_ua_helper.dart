@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+
+import 'package:flutter_webrtc/webrtc.dart';
 import 'package:logger/logger.dart';
 
 import 'config.dart';
@@ -8,7 +9,6 @@ import 'event_manager/event_manager.dart';
 import 'logger.dart';
 import 'message.dart';
 import 'rtc_session.dart';
-import 'socket.dart';
 import 'stack_trace_nj.dart';
 import 'transports/websocket_interface.dart';
 import 'ua.dart';
@@ -28,9 +28,13 @@ class SIPUAHelper extends EventManager {
     Log.loggingLevel = Level.debug;
   }
 
-  static Future<void> callKitConfigure() async => callKitConfigureAudioSession();
+  static Future<void> callKitConfigure() async =>
+      callKitConfigureAudioSession();
+
   static Future<void> callKitRelease() async => callKitReleaseAudioSession();
+
   static Future<void> callKitStart() async => callKitStartAudio();
+
   static Future<void> callKitStop() async => callKitStopAudio();
 
   set loggingLevel(Level loggingLevel) => Log.loggingLevel = loggingLevel;
@@ -383,6 +387,7 @@ class Call {
   String _id;
   CallStateEnum _stateEnum;
   RTCSession _session;
+
   Call(this._id, this._session, this._stateEnum);
 
   set state(CallStateEnum state) {
@@ -488,6 +493,7 @@ class CallState {
   bool video;
   MediaStream stream;
   EventCallRefer refer;
+
   CallState(this.state,
       {this.originator,
       this.audio,
@@ -507,6 +513,7 @@ enum RegistrationStateEnum {
 class RegistrationState {
   RegistrationStateEnum state;
   ErrorCause cause;
+
   RegistrationState({this.state, this.cause});
 }
 
@@ -520,6 +527,7 @@ enum TransportStateEnum {
 class TransportState {
   TransportStateEnum state;
   ErrorCause cause;
+
   TransportState(this.state, {this.cause});
 }
 
@@ -527,13 +535,17 @@ class SIPMessageRequest {
   dynamic request;
   String originator;
   Message message;
+
   SIPMessageRequest(this.message, this.originator, this.request);
 }
 
 abstract class SipUaHelperListener {
   void transportStateChanged(TransportState state);
+
   void registrationStateChanged(RegistrationState state);
+
   void callStateChanged(Call call, CallState state);
+
   //For SIP new messaga coming
   void onNewMessage(SIPMessageRequest msg);
 }
