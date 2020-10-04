@@ -10,6 +10,7 @@ import 'ua.dart';
 import 'utils.dart' as Utils;
 import 'event_manager/event_manager.dart';
 import 'event_manager/internal_events.dart';
+import 'grammar.dart';
 import 'logger.dart';
 
 const MIN_REGISTER_EXPIRES = 10; // In seconds.
@@ -71,6 +72,10 @@ class Registrator {
     // Custom Contact header params for REGISTER and un-REGISTER.
     this._extraContactParams = '';
 
+    // Custom Contact URI params for REGISTER and un-REGISTER.
+    this.setExtraContactUriParams(
+        ua.configuration.register_extra_contact_uri_params);
+
     if (reg_id != null) {
       this._contact += ';reg-id=${reg_id}';
       this._contact +=
@@ -105,13 +110,28 @@ class Registrator {
     });
   }
 
+  setExtraContactUriParams(extraContactUriParams) {
+    if (extraContactUriParams is! Map) {
+      extraContactUriParams = {};
+    }
+
+    var contact = Grammar.parse(this._contact, 'Contact')[0]['parsed'];
+    contact.uri.clearParams();
+
+    extraContactUriParams.forEach((param_key, param_value) {
+      contact.uri.setParam(param_key, param_value);
+    });
+
+    this._contact = contact.toString();
+  }
+
   register() {
     if (this._registering) {
       logger.debug('Register request in progress...');
       return;
     }
 
-    var extraHeaders = [];
+    var extraHeaders = List.from(_extraHeaders ?? []);
 
     extraHeaders.add(
         'Contact: ${this._contact};expires=${this._expires}${this._extraContactParams}');
@@ -133,11 +153,15 @@ class Registrator {
     EventManager localEventHandlers = EventManager();
     localEventHandlers.on(EventOnRequestTimeout(),
         (EventOnRequestTimeout value) {
-      this._registrationFailure(UnHandledResponse(408, DartSIP_C.causes.REQUEST_TIMEOUT), DartSIP_C.causes.REQUEST_TIMEOUT);
+      this._registrationFailure(
+          UnHandledResponse(408, DartSIP_C.causes.REQUEST_TIMEOUT),
+          DartSIP_C.causes.REQUEST_TIMEOUT);
     });
     localEventHandlers.on(EventOnTransportError(),
         (EventOnTransportError value) {
-      this._registrationFailure(UnHandledResponse(500, DartSIP_C.causes.CONNECTION_ERROR), DartSIP_C.causes.CONNECTION_ERROR);
+      this._registrationFailure(
+          UnHandledResponse(500, DartSIP_C.causes.CONNECTION_ERROR),
+          DartSIP_C.causes.CONNECTION_ERROR);
     });
     localEventHandlers.on(EventOnAuthenticated(), (EventOnAuthenticated value) {
       this._cseq += 1;
@@ -274,7 +298,7 @@ class Registrator {
       this._registrationTimer = null;
     }
 
-    var extraHeaders = [];
+    var extraHeaders = List.from(_extraHeaders ?? []);
 
     if (unregister_all) {
       extraHeaders.add('Contact: *${this._extraContactParams}');

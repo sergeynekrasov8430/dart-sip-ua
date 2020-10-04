@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter_webrtc/webrtc.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:logger/logger.dart';
 
 import 'config.dart';
@@ -99,15 +99,21 @@ class SIPUAHelper extends EventManager {
     _uaSettings = uaSettings;
 
     _settings = Settings();
-    var socket = WebSocketInterface(uaSettings.webSocketUrl,
-        uaSettings.webSocketExtraHeaders, uaSettings.allowBadCertificate);
-    _settings.contact_uri = uaSettings.contactUri;
+
+    // _settings.contact_uri = uaSettings.contactUri;
+    var socket = WebSocketInterface(
+        uaSettings.webSocketUrl, uaSettings.webSocketSettings);
     _settings.sockets = [socket];
     _settings.uri = uaSettings.uri;
     _settings.password = uaSettings.password;
+    _settings.ha1 = uaSettings.ha1;
     _settings.display_name = uaSettings.displayName;
     _settings.authorization_user = uaSettings.authorizationUser;
     _settings.user_agent = uaSettings.userAgent ?? DartSIP_C.USER_AGENT;
+    _settings.register = uaSettings.register;
+    _settings.register_expires = uaSettings.register_expires;
+    _settings.register_extra_contact_uri_params =
+        uaSettings.registerParams.extraContactUriParams;
 
     try {
       _ua = UA(_settings);
@@ -343,7 +349,7 @@ class SIPUAHelper extends EventManager {
       logger.e('Call ${event.id} not found!');
       return;
     }
-    call.UpdateState(state.state);
+    call.state = state.state;
     _sipUaHelperListeners.forEach((listener) {
       listener.callStateChanged(call, state);
     });
@@ -379,8 +385,8 @@ class Call {
   RTCSession _session;
   Call(this._id, this._session, this._stateEnum);
 
-  void UpdateState(CallStateEnum stateEnum) {
-    _stateEnum = stateEnum;
+  set state(CallStateEnum state) {
+    _stateEnum = state;
   }
 
   CallStateEnum get state => _stateEnum;
@@ -433,20 +439,36 @@ class Call {
     _session.sendDTMF(tones);
   }
 
+  String get remote_display_name {
+    assert(_session != null,
+        'ERROR(get remote_identity): rtc session is invalid!');
+    if (_session.remote_identity != null &&
+        _session.remote_identity.display_name != null) {
+      return _session.remote_identity.display_name;
+    }
+    return '';
+  }
+
   String get remote_identity {
     assert(_session != null,
         'ERROR(get remote_identity): rtc session is invalid!');
-    if (_session.remote_identity != null) {
-      if (_session.remote_identity.display_name != null) {
-        return _session.remote_identity.display_name;
-      } else {
-        if (_session.remote_identity.uri != null &&
-            _session.remote_identity.uri.user != null) {
-          return _session.remote_identity.uri.user;
-        }
-      }
+    if (_session.remote_identity != null &&
+        _session.remote_identity.uri != null &&
+        _session.remote_identity.uri.user != null) {
+      return _session.remote_identity.uri.user;
     }
-    return "";
+    return '';
+  }
+
+  String get local_identity {
+    assert(
+        _session != null, 'ERROR(get local_identity): rtc session is invalid!');
+    if (_session.local_identity != null &&
+        _session.local_identity.uri != null &&
+        _session.local_identity.uri.user != null) {
+      return _session.local_identity.uri.user;
+    }
+    return '';
   }
 
   String get direction {
@@ -454,7 +476,7 @@ class Call {
     if (_session.direction != null) {
       return _session.direction.toUpperCase();
     }
-    return "";
+    return '';
   }
 }
 
@@ -516,15 +538,46 @@ abstract class SipUaHelperListener {
   void onNewMessage(SIPMessageRequest msg);
 }
 
+class RegisterParams {
+  /// Allow extra headers and Contact Params to be sent on REGISTER
+  /// Mainly used for RFC8599 Support
+  /// https://github.com/cloudwebrtc/dart-sip-ua/issues/89
+  Map<String, dynamic> extraContactUriParams = {};
+}
+
+class WebSocketSettings {
+  /// Add additional HTTP headers, such as:'Origin','Host' or others
+  Map<String, dynamic> extraHeaders = {};
+
+  /// `User Agent` field for dart http client.
+  String userAgent;
+
+  /// Don‘t check the server certificate
+  /// for self-signed certificate.
+  bool allowBadCertificate = false;
+}
+
 class UaSettings {
   String webSocketUrl;
-  Map<String, dynamic> webSocketExtraHeaders;
-  bool allowBadCertificate = false;
+  WebSocketSettings webSocketSettings = WebSocketSettings();
+
+  /// May not need to register if on a static IP, just Auth
+  /// Default is true
+  bool register;
+
+  /// Default is 600 secs in config.dart
+  int register_expires;
+
+  /// Mainly used for RFC8599 Push Notification Support
+  RegisterParams registerParams = RegisterParams();
+
+  /// `User Agent` field for sip message.
   String userAgent;
   String contactUri;
   String uri;
   String authorizationUser;
   String password;
+  String ha1;
   String displayName;
 
   List<Map<String, String>> iceServers = [
