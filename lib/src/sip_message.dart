@@ -453,6 +453,10 @@ class IncomingMessage {
     }
 
     // Substitute '-' by '_' for grammar rule matching.
+    if (name == 'Call-ID') {
+      // vladimir: call-id with uppercase somehow fails on parsing
+      value = value.toString().toLowerCase();
+    }
     dynamic parsed = Grammar.parse(value, name.replaceAll('-', '_'));
     if (parsed == -1) {
       headers![name].splice(idx, 1); // delete from headers

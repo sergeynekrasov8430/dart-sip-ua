@@ -19,6 +19,7 @@ import 'rtc_session/info.dart' as RTCSession_Info;
 import 'rtc_session/info.dart';
 import 'rtc_session/refer_notifier.dart';
 import 'rtc_session/refer_subscriber.dart';
+import 'sdp_optimizator/sdp_optimizator.dart';
 import 'sip_message.dart';
 import 'timers.dart';
 import 'transactions/transaction_base.dart';
@@ -65,8 +66,66 @@ class RFC4028Timers {
 }
 
 class RTCSession extends EventManager implements Owner {
+
+  final int Function() _iceTimeoutGetter;
+
   RTCSession(this._ua) {
     logger.d('new');
+
+    _id = null;
+    _ua = ua;
+     _iceTimeoutGetter = _ua.iceTimeoutGetter;
+    _status = C.STATUS_NULL;
+    _dialog = null;
+    _earlyDialogs = <String, Dialog>{};
+    _contact = null;
+    _from_tag = null;
+    _to_tag = null;
+
+    // The RTCPeerConnection instance (public attribute).
+    _connection = null;
+
+    // Incoming/Outgoing request being currently processed.
+    _request = null;
+
+    // Cancel state for initial outgoing request.
+    _is_canceled = false;
+    _cancel_reason = '';
+
+    // RTCSession confirmation flag.
+    _is_confirmed = false;
+
+    // Is late SDP being negotiated.
+    _late_sdp = false;
+
+    // Default rtcOfferConstraints and rtcAnswerConstrainsts (passed in connect() or answer()).
+    _rtcOfferConstraints = null;
+    _rtcAnswerConstraints = null;
+
+    // Local MediaStream.
+    _localMediaStream = null;
+    _localMediaStreamLocallyGenerated = false;
+
+    // Flag to indicate PeerConnection ready for actions.
+    _rtcReady = true;
+
+    // SIP Timers.
+    _timers = SIPTimers();
+
+    // Session info.
+    _direction = null;
+    _local_identity = null;
+    _remote_identity = null;
+    _start_time = null;
+    _end_time = null;
+    _tones = null;
+
+    // Mute/Hold state.
+    _audioMuted = false;
+    _videoMuted = false;
+    _localHold = false;
+    _remoteHold = false;
+
     // Session Timers (RFC 4028).
     _sessionTimers = RFC4028Timers(
         _ua.configuration.session_timers,
@@ -631,6 +690,9 @@ class RTCSession extends EventManager implements Owner {
     }
 
     logger.d('emit "sdp"');
+    logger.d('sdp original: ${request.body}');
+    request.body = SdpOptimisator.optimiseLocalSDP(request.body, true, false);
+    logger.d('sdp optimised: ${request.body}');
     emit(EventSdp(originator: 'remote', type: 'offer', sdp: request.body));
 
     RTCSessionDescription offer = RTCSessionDescription(request.body, 'offer');
@@ -755,7 +817,7 @@ class RTCSession extends EventManager implements Owner {
       case C.STATUS_ANSWERED:
         logger.d('rejecting session');
 
-        status_code = status_code ?? 480;
+        status_code = status_code ?? 486;
 
         if (status_code < 300 || status_code >= 700) {
           throw Exceptions.InvalidStateError(
@@ -1644,6 +1706,7 @@ class RTCSession extends EventManager implements Owner {
     if (type == 'offer') {
       try {
         desc = await _connection!.createOffer(constraints);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, true, true);
       } catch (error) {
         logger.e(
             'emit "peerconnection:createofferfailed" [error:${error.toString()}]');
@@ -1653,6 +1716,7 @@ class RTCSession extends EventManager implements Owner {
     } else {
       try {
         desc = await _connection!.createAnswer(constraints);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, false, true);
       } catch (error) {
         logger.e(
             'emit "peerconnection:createanswerfailed" [error:${error.toString()}]');
@@ -1703,9 +1767,8 @@ class RTCSession extends EventManager implements Owner {
            * initiating a call to answer the call waiting will be unacceptable.
            */
           if (ua.configuration.ice_gathering_timeout != 0) {
-            setTimeout(() => ready(), ua.configuration.ice_gathering_timeout);
+            setTimeout(() => ready(), _iceTimeoutGetter());
           }
-        }
       }
     };
 
@@ -1976,6 +2039,9 @@ class RTCSession extends EventManager implements Owner {
     }
 
     logger.d('emit "sdp"');
+    logger.d('sdp original: ${request.body}');
+    request.body = SdpOptimisator.optimiseLocalSDP(request.body, true, false);
+    logger.d('sdp optimised: ${request.body}');
     emit(EventSdp(originator: 'remote', type: 'offer', sdp: request.body));
 
     RTCSessionDescription offer = RTCSessionDescription(request.body, 'offer');

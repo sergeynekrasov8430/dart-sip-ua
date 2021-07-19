@@ -25,6 +25,12 @@ class SIPUAHelper extends EventManager {
     }
   }
 
+  static Future<void> callKitConfigure() async =>
+      callKitConfigureAudioSession();
+  static Future<void> callKitRelease() async => callKitReleaseAudioSession();
+  static Future<void> callKitStart() async => callKitStartAudio();
+  static Future<void> callKitStop() async => callKitStopAudio();
+
   UA? _ua;
   Settings _settings = Settings();
   UaSettings? _uaSettings;
@@ -110,7 +116,7 @@ class SIPUAHelper extends EventManager {
     return _calls[id];
   }
 
-  Future<void> start(UaSettings uaSettings) async {
+  Future<void> start(UaSettings uaSettings, int Function() iceTimeoutGetter) async {
     if (_ua != null) {
       logger.w('UA instance already exist!, stopping UA and creating a one...');
       _ua!.stop();
@@ -143,9 +149,10 @@ class SIPUAHelper extends EventManager {
         uaSettings.sessionTimersRefreshMethod;
     _settings.instance_id = uaSettings.instanceId;
     _settings.registrar_server = uaSettings.registrarServer;
+    _settings.contact_uri = uaSettings.contactUri;
 
     try {
-      _ua = UA(_settings);
+      _ua = UA(_settings, iceTimeoutGetter));
       _ua!.on(EventSocketConnecting(), (EventSocketConnecting event) {
         logger.d('connecting => $event');
         _notifyTransportStateListeners(
@@ -713,6 +720,7 @@ class UaSettings {
   String? displayName;
   String? instanceId;
   String? registrarServer;
+  String? contactUri;
 
   /// DTMF mode, in band (rfc2833) or out of band (sip info)
   DtmfMode dtmfMode = DtmfMode.INFO;
@@ -726,7 +734,7 @@ class UaSettings {
   /// Sip Message Delay (in millisecond) (default 0).
   int sip_message_delay = 0;
   List<Map<String, String>> iceServers = <Map<String, String>>[
-    <String, String>{'url': 'stun:stun.l.google.com:19302'},
+    <String, String>{'url': 'stun:ice.callinfo.kz:3478'},
 // turn server configuration example.
 //    {
 //      'url': 'turn:123.45.67.89:3478',
