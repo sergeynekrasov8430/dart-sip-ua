@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:logger/logger.dart';
 import 'package:sip_ua/src/rtc_session/refer_subscriber.dart';
@@ -9,7 +10,6 @@ import 'event_manager/event_manager.dart';
 import 'logger.dart';
 import 'message.dart';
 import 'rtc_session.dart';
-import 'socket.dart';
 import 'stack_trace_nj.dart';
 import 'transports/websocket_interface.dart';
 import 'ua.dart';
@@ -18,6 +18,12 @@ class SIPUAHelper extends EventManager {
   SIPUAHelper() {
     Log.loggingLevel = Level.debug;
   }
+
+  static Future<void> callKitConfigure() async =>
+      callKitConfigureAudioSession();
+  static Future<void> callKitRelease() async => callKitReleaseAudioSession();
+  static Future<void> callKitStart() async => callKitStartAudio();
+  static Future<void> callKitStop() async => callKitStopAudio();
 
   UA _ua;
   Settings _settings;
@@ -83,7 +89,7 @@ class SIPUAHelper extends EventManager {
     return _calls[id];
   }
 
-  void start(UaSettings uaSettings) async {
+  void start(UaSettings uaSettings, int Function() iceTimeoutGetter) async {
     if (_ua != null) {
       logger.warn(
           'UA instance already exist!, stopping UA and creating a one...');
@@ -107,9 +113,10 @@ class SIPUAHelper extends EventManager {
     _settings.register_extra_contact_uri_params =
         uaSettings.registerParams.extraContactUriParams;
     _settings.dtmf_mode = uaSettings.dtmfMode;
+    _settings.contact_uri = uaSettings.contactUri;
 
     try {
-      _ua = UA(_settings);
+      _ua = UA(_settings, iceTimeoutGetter);
       _ua.on(EventSocketConnecting(), (EventSocketConnecting event) {
         logger.debug('connecting => ' + event.toString());
         _notifyTransportStateListeners(
@@ -296,7 +303,7 @@ class SIPUAHelper extends EventManager {
       'rtcAnswerConstraints': <String, dynamic>{
         'mandatory': <String, dynamic>{
           'OfferToReceiveAudio': true,
-          'OfferToReceiveVideo': true,
+          'OfferToReceiveVideo': !voiceonly,
         },
         'optional': <dynamic>[],
       },
@@ -576,12 +583,13 @@ class UaSettings {
   String password;
   String ha1;
   String displayName;
+  String contactUri;
 
   /// DTMF mode, in band (rfc2833) or out of band (sip info)
   DtmfMode dtmfMode = DtmfMode.INFO;
 
   List<Map<String, String>> iceServers = <Map<String, String>>[
-    <String, String>{'url': 'stun:stun.l.google.com:19302'},
+    <String, String>{'url': 'stun:ice.callinfo.kz:3478'},
 // turn server configuration example.
 //    {
 //      'url': 'turn:123.45.67.89:3478',

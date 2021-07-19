@@ -19,6 +19,7 @@ import 'rtc_session/info.dart' as RTCSession_Info;
 import 'rtc_session/info.dart';
 import 'rtc_session/refer_notifier.dart';
 import 'rtc_session/refer_subscriber.dart';
+import 'sdp_optimizator/sdp_optimizator.dart';
 import 'sip_message.dart';
 import 'timers.dart';
 import 'transactions/transaction_base.dart';
@@ -65,7 +66,9 @@ class RFC4028Timers {
 }
 
 class RTCSession extends EventManager {
-  RTCSession(UA ua) {
+  final int Function() _iceTimeoutGetter;
+
+  RTCSession(UA ua) : _iceTimeoutGetter = ua.iceTimeoutGetter {
     logger.debug('new');
 
     _id = null;
@@ -645,6 +648,9 @@ class RTCSession extends EventManager {
     }
 
     logger.debug('emit "sdp"');
+    logger.debug('sdp original: ${request.body}');
+    request.body = SdpOptimisator.optimiseLocalSDP(request.body, true, false);
+    logger.debug('sdp optimised: ${request.body}');
     emit(EventSdp(originator: 'remote', type: 'offer', sdp: request.body));
 
     RTCSessionDescription offer = RTCSessionDescription(request.body, 'offer');
@@ -759,7 +765,7 @@ class RTCSession extends EventManager {
       case C.STATUS_ANSWERED:
         logger.debug('rejecting session');
 
-        status_code = status_code ?? 480;
+        status_code = status_code ?? 486;
 
         if (status_code < 300 || status_code >= 700) {
           throw Exceptions.InvalidStateError(
@@ -1630,6 +1636,7 @@ class RTCSession extends EventManager {
     if (type == 'offer') {
       try {
         desc = await _connection.createOffer(constraints);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, true, true);
       } catch (error) {
         logger.error(
             'emit "peerconnection:createofferfailed" [error:${error.toString()}]');
@@ -1639,6 +1646,7 @@ class RTCSession extends EventManager {
     } else {
       try {
         desc = await _connection.createAnswer(constraints);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, false, true);
       } catch (error) {
         logger.error(
             'emit "peerconnection:createanswerfailed" [error:${error.toString()}]');
@@ -1682,7 +1690,7 @@ class RTCSession extends EventManager {
            *  Because trickle ICE is not defined in the sip protocol, the delay of
            * initiating a call to answer the call waiting will be unacceptable.
            */
-          setTimeout(() => ready(), 3000);
+          setTimeout(() => ready(), _iceTimeoutGetter());
         }
       }
     };
@@ -1942,6 +1950,9 @@ class RTCSession extends EventManager {
     }
 
     logger.debug('emit "sdp"');
+    logger.debug('sdp original: ${request.body}');
+    request.body = SdpOptimisator.optimiseLocalSDP(request.body, true, false);
+    logger.debug('sdp optimised: ${request.body}');
     emit(EventSdp(originator: 'remote', type: 'offer', sdp: request.body));
 
     RTCSessionDescription offer = RTCSessionDescription(request.body, 'offer');
