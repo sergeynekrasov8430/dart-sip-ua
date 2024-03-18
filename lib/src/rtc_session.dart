@@ -67,65 +67,8 @@ class RFC4028Timers {
 
 class RTCSession extends EventManager implements Owner {
 
-  final int Function() _iceTimeoutGetter;
-
-  RTCSession(this._ua) {
+  RTCSession(this._ua, this._iceTimeoutGetter) {
     logger.d('new');
-
-    _id = null;
-    _ua = ua;
-     _iceTimeoutGetter = _ua.iceTimeoutGetter;
-    _status = C.STATUS_NULL;
-    _dialog = null;
-    _earlyDialogs = <String, Dialog>{};
-    _contact = null;
-    _from_tag = null;
-    _to_tag = null;
-
-    // The RTCPeerConnection instance (public attribute).
-    _connection = null;
-
-    // Incoming/Outgoing request being currently processed.
-    _request = null;
-
-    // Cancel state for initial outgoing request.
-    _is_canceled = false;
-    _cancel_reason = '';
-
-    // RTCSession confirmation flag.
-    _is_confirmed = false;
-
-    // Is late SDP being negotiated.
-    _late_sdp = false;
-
-    // Default rtcOfferConstraints and rtcAnswerConstrainsts (passed in connect() or answer()).
-    _rtcOfferConstraints = null;
-    _rtcAnswerConstraints = null;
-
-    // Local MediaStream.
-    _localMediaStream = null;
-    _localMediaStreamLocallyGenerated = false;
-
-    // Flag to indicate PeerConnection ready for actions.
-    _rtcReady = true;
-
-    // SIP Timers.
-    _timers = SIPTimers();
-
-    // Session info.
-    _direction = null;
-    _local_identity = null;
-    _remote_identity = null;
-    _start_time = null;
-    _end_time = null;
-    _tones = null;
-
-    // Mute/Hold state.
-    _audioMuted = false;
-    _videoMuted = false;
-    _localHold = false;
-    _remoteHold = false;
-
     // Session Timers (RFC 4028).
     _sessionTimers = RFC4028Timers(
         _ua.configuration.session_timers,
@@ -138,6 +81,8 @@ class RTCSession extends EventManager implements Owner {
 
     receiveRequest = _receiveRequest;
   }
+
+  final int Function() _iceTimeoutGetter;
 
   final UA _ua;
 
@@ -1770,6 +1715,7 @@ class RTCSession extends EventManager implements Owner {
             setTimeout(() => ready(), _iceTimeoutGetter());
           }
       }
+      }
     };
 
     try {
@@ -2121,7 +2067,7 @@ class RTCSession extends EventManager implements Owner {
         return false;
       }
 
-      RTCSession session = RTCSession(_ua);
+      RTCSession session = RTCSession(_ua, _iceTimeoutGetter);
 
       session.on(EventCallProgress(), (EventCallProgress event) {
         notifier.notify(
@@ -2230,7 +2176,7 @@ class RTCSession extends EventManager implements Owner {
         return false;
       }
 
-      RTCSession session = RTCSession(_ua);
+      RTCSession session = RTCSession(_ua, _iceTimeoutGetter);
 
       // Terminate the current session when the one is confirmed.
       session.on(EventCallConfirmed(), (EventCallConfirmed data) {
@@ -3083,3 +3029,4 @@ class RTCSession extends EventManager implements Owner {
     emit(EventCallUnmuted(session: this, audio: audio, video: video));
   }
 }
+
