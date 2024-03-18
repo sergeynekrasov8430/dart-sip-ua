@@ -6,13 +6,15 @@ SdpSimplified processSdp(SdpSimplified sdp, bool isOffer, bool isLocal) {
     if (isOffer) {
       // work with sdp from offers
 
-      var allowedAudioCodecs = ['PCMA', 'opus', 'PCMU'];
+      List<String> allowedAudioCodecs = <String>['PCMA', 'opus', 'PCMU'];
       sdp.audioCodecs
-          .removeWhere((element) => !allowedAudioCodecs.contains(element.name));
+          .removeWhere(
+          (AudioCodec element) => !allowedAudioCodecs.contains(element.name));
 
-      var allowedVideoCodecs = ['H264', 'VP8'];
+      List<String> allowedVideoCodecs = <String>['H264', 'VP8'];
       sdp.videoCodecs
-          .removeWhere((element) => !allowedVideoCodecs.contains(element.name));
+          .removeWhere(
+          (VideoCodec element) => !allowedVideoCodecs.contains(element.name));
 
       //    sdp.audioCodecs.removeWhere((element) => element.name == 'opus');
 
@@ -129,10 +131,10 @@ SdpSimplified processSdp(SdpSimplified sdp, bool isOffer, bool isLocal) {
   if (!isLocal) {
     if (isOffer) {
       if (sdp.videoCodecs != null && sdp.videoCodecs.isNotEmpty) {
-        var h264Index =
-            sdp.videoCodecs.indexWhere((element) => element.name == 'H264');
-        var currentFmtp = sdp.videoCodecs[h264Index].fmtp;
-        var fakeH264FmtpConfig = {
+        int h264Index = sdp.videoCodecs
+            .indexWhere((VideoCodec element) => element.name == 'H264');
+        List? currentFmtp = sdp.videoCodecs[h264Index].fmtp;
+        Map<String, Object> fakeH264FmtpConfig = <String, Object>{
           'payload': sdp.videoCodecs[h264Index].payload,
           'config':
               'level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f',
@@ -142,7 +144,7 @@ SdpSimplified processSdp(SdpSimplified sdp, bool isOffer, bool isLocal) {
           sdp.videoCodecs[h264Index].fmtp = [fakeH264FmtpConfig];
           print('fixed broken h264 params in sdp (created fake h264fmtp)');
         } else {
-          var copy = sdp.videoCodecs[h264Index].fmtp;
+          List? copy = sdp.videoCodecs[h264Index].fmtp ?? List.empty();
           copy.add(fakeH264FmtpConfig);
           sdp.videoCodecs[h264Index].fmtp = copy;
           print('fixed broken h264 params in sdp (added fake h264fmtp)');
@@ -151,4 +153,5 @@ SdpSimplified processSdp(SdpSimplified sdp, bool isOffer, bool isLocal) {
       return sdp;
     }
   }
+  return sdp;
 }

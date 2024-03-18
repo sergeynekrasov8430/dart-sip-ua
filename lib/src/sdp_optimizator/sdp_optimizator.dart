@@ -5,8 +5,8 @@ import 'sdp_simplified.dart';
 
 class SdpOptimisator {
   static String optimiseLocalSDP(String sdp, bool isOffer, isLocal) {
-    var sdpMap = sdp_transform.parse(sdp);
-    var sdpSimplified = SdpSimplified.fromSdpMap(sdpMap);
+    Map<String, dynamic> sdpMap = sdp_transform.parse(sdp);
+    SdpSimplified sdpSimplified = SdpSimplified.fromSdpMap(sdpMap);
     // print('=================================');
     // developer.log('>>> About to mutate local SDP \n $sdp}');
     // print('=================================');
@@ -14,14 +14,14 @@ class SdpOptimisator {
     // sdpSimplified.log();
     // print('=================================');
     // print('>>> with processed SDP:');
-    var processedSdp = processSdp(sdpSimplified, isOffer, isLocal);
+    SdpSimplified processedSdp = processSdp(sdpSimplified, isOffer, isLocal);
     // processedSdp.log();
     // print('=================================');
 
     var media = sdpMap['media'];
-    var indexOfAudioMedia = (sdpMap['media'] as List)
+    int indexOfAudioMedia = (sdpMap['media'] as List)
         .indexWhere((element) => element['type'] == 'audio');
-    var indexOfVideoMedia = (sdpMap['media'] as List)
+    int indexOfVideoMedia = (sdpMap['media'] as List)
         .indexWhere((element) => element['type'] == 'video');
 
     if (indexOfAudioMedia != null && indexOfAudioMedia != -1) {
@@ -46,7 +46,7 @@ class SdpOptimisator {
       if (!processedSdp.includeAudioExt) {
         // print('>>> from (ext rmv) \n ${sdpMap['media'][indexOfAudioMedia]['ext']}');
         (sdpMap['media'][indexOfAudioMedia] as Map)
-            ?.removeWhere((key, value) => key == 'ext');
+            .removeWhere((key, value) => key == 'ext');
         // print('>>> to (ext rmv) \n ${sdpMap['media'][indexOfAudioMedia]['ext']}');
       }
       // print('>>> from (direction) \n ${sdpMap['media'][indexOfAudioMedia]['direction']}');
@@ -77,7 +77,7 @@ class SdpOptimisator {
       if (!processedSdp.includeVideoExt) {
         // print('>>> from (ext rmv+v) \n ${sdpMap['media'][indexOfVideoMedia]['ext']}');
         (sdpMap['media'][indexOfVideoMedia] as Map)
-            ?.removeWhere((key, value) => key == 'ext');
+            .removeWhere((key, value) => key == 'ext');
         // print('>>> to (ext rmv+v) \n ${sdpMap['media'][indexOfVideoMedia]['ext']}');
       }
       // print('>>> from (direction+v) \n ${sdpMap['media'][indexOfVideoMedia]['direction']}');
@@ -90,34 +90,34 @@ class SdpOptimisator {
     // print('>>> to (groups) \n ${sdpMap['groups']}');
 
     // print('=================================');
-    var optimizedSdp = sdp_transform.write(sdpMap, null);
+    String optimizedSdp = sdp_transform.write(sdpMap, null);
     // developer.log('SDP optimisation result: \n $optimizedSdp}');
     return optimizedSdp;
   }
 
   static List<Map<String, dynamic>> _makeRtp(List<Codec> codecs) =>
-      codecs.map((codec) => codec.makeRtp()).toList();
+      codecs.map((Codec codec) => codec.makeRtp()).toList();
 
-  static List _makeFmtp(List<Codec> codecs) {
-    var fmtp = [];
-    codecs.forEach((codec) {
+  static List? _makeFmtp(List<Codec> codecs) {
+    List fmtp = [];
+    for (Codec codec in codecs) {
       if (codec.fmtp != null) {
         fmtp.addAll(codec.fmtp);
       }
-    });
+    }
     if (fmtp.isEmpty) {
       return null;
     }
     return fmtp;
   }
 
-  static List _makeRtcpFb(List<Codec> codecs) {
-    var rtcpFb = [];
-    codecs.forEach((codec) {
+  static List? _makeRtcpFb(List<Codec> codecs) {
+    List rtcpFb = [];
+    for (Codec codec in codecs) {
       if (codec.rtcpFb != null) {
         rtcpFb.addAll(codec.rtcpFb);
       }
-    });
+    }
     rtcpFb.removeWhere((element) => element == null);
     if (rtcpFb.isEmpty) {
       return null;
@@ -127,13 +127,13 @@ class SdpOptimisator {
 
   // Removes unneeded codecs from payloads string (video/audio)
   static String _makePayloadsForCodecs(List<Codec> codecs) {
-    var payloads = '';
-    codecs.forEach((codec) {
+    String payloads = '';
+    for (Codec codec in codecs) {
       if (payloads.length > 0) {
         payloads += ' ';
       }
       payloads += codec.payload.toString();
-    });
+    }
     return payloads;
   }
 }
