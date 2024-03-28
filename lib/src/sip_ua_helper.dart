@@ -152,7 +152,7 @@ class SIPUAHelper extends EventManager {
     _settings.contact_uri = uaSettings.contactUri;
 
     try {
-      _ua = UA(_settings, iceTimeoutGetter));
+      _ua = UA(_settings, iceTimeoutGetter);
       _ua!.on(EventSocketConnecting(), (EventSocketConnecting event) {
         logger.d('connecting => $event');
         _notifyTransportStateListeners(

@@ -249,7 +249,7 @@ class UA extends EventManager {
    */
   RTCSession call(String target, Map<String, dynamic> options) {
     logger.d('call()');
-    RTCSession session = RTCSession(this);
+    RTCSession session = RTCSession(this, iceTimeoutGetter);
     session.connect(target, options);
     return session;
   }
@@ -690,7 +690,7 @@ class UA extends EventManager {
                 request.reply(481);
               }
             } else {
-              session = RTCSession(this);
+              session = RTCSession(this, iceTimeoutGetter);
               session.init_incoming(request);
             }
           } else {
