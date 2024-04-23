@@ -116,7 +116,8 @@ class SIPUAHelper extends EventManager {
     return _calls[id];
   }
 
-  Future<void> start(UaSettings uaSettings, int Function() iceTimeoutGetter) async {
+  Future<void> start(
+      UaSettings uaSettings, int Function() iceTimeoutGetter) async {
     if (_ua != null) {
       logger.w('UA instance already exist!, stopping UA and creating a one...');
       _ua!.stop();
@@ -152,7 +153,7 @@ class SIPUAHelper extends EventManager {
     _settings.contact_uri = uaSettings.contactUri;
 
     try {
-      _ua = UA(_settings, iceTimeoutGetter);
+      _ua = UA(_settings, iceTimeoutGetter: iceTimeoutGetter);
       _ua!.on(EventSocketConnecting(), (EventSocketConnecting event) {
         logger.d('connecting => $event');
         _notifyTransportStateListeners(

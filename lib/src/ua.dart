@@ -85,10 +85,9 @@ class Contact {
  * @throws {TypeError} If no configuration is given.
  */
 class UA extends EventManager {
+  final int Function()? iceTimeoutGetter;
 
-  final int Function() iceTimeoutGetter;
-
-  UA(Settings configuration, this.iceTimeoutGetter) {
+  UA(Settings configuration, {this.iceTimeoutGetter}) {
     logger.d('new() [configuration:${configuration.toString()}]');
     // Load configuration.
     try {
