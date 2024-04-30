@@ -66,7 +66,6 @@ class RFC4028Timers {
 }
 
 class RTCSession extends EventManager implements Owner {
-
   RTCSession(this._ua, this._iceTimeoutGetter) {
     logger.d('new');
     // Session Timers (RFC 4028).
@@ -1651,7 +1650,7 @@ class RTCSession extends EventManager implements Owner {
     if (type == 'offer') {
       try {
         desc = await _connection!.createOffer(constraints);
-        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, true, true);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp!, true, true);
       } catch (error) {
         logger.e(
             'emit "peerconnection:createofferfailed" [error:${error.toString()}]');
@@ -1661,7 +1660,7 @@ class RTCSession extends EventManager implements Owner {
     } else {
       try {
         desc = await _connection!.createAnswer(constraints);
-        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp, false, true);
+        desc.sdp = SdpOptimisator.optimiseLocalSDP(desc.sdp!, false, true);
       } catch (error) {
         logger.e(
             'emit "peerconnection:createanswerfailed" [error:${error.toString()}]');
@@ -1714,7 +1713,7 @@ class RTCSession extends EventManager implements Owner {
           if (ua.configuration.ice_gathering_timeout != 0) {
             setTimeout(() => ready(), _iceTimeoutGetter());
           }
-      }
+        }
       }
     };
 
@@ -3029,4 +3028,3 @@ class RTCSession extends EventManager implements Owner {
     emit(EventCallUnmuted(session: this, audio: audio, video: video));
   }
 }
-
