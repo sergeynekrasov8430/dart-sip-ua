@@ -102,7 +102,7 @@ class SdpOptimisator {
     List fmtp = [];
     for (Codec codec in codecs) {
       if (codec.fmtp != null) {
-        fmtp.addAll(codec.fmtp);
+        fmtp.addAll(codec.fmtp!);
       }
     }
     if (fmtp.isEmpty) {
@@ -115,7 +115,7 @@ class SdpOptimisator {
     List rtcpFb = [];
     for (Codec codec in codecs) {
       if (codec.rtcpFb != null) {
-        rtcpFb.addAll(codec.rtcpFb);
+        rtcpFb.addAll(codec.rtcpFb!);
       }
     }
     rtcpFb.removeWhere((element) => element == null);
